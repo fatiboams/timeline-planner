@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Responsive project timeline planner with tasks, milestones, drag scheduling, local storage and JSON import/export.">
+  <meta name="theme-color" content="#0f172a">
+  <title>Timeline Planner</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="container hero-inner">
+      <div>
+        <p class="eyebrow">Open-source project planner</p>
+        <h1>Timeline Planner</h1>
+        <p class="lead">Plan tasks and milestones, drag schedules across the timeline, track progress and save everything locally.</p>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggle" class="button ghost" type="button">Dark mode</button>
+        <button id="exportButton" class="button ghost" type="button">Export JSON</button>
+        <button id="importButton" class="button primary" type="button">Import JSON</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+      </div>
+    </div>
+  </header>
+
+  <main class="container app-shell">
+    <section class="panel editor">
+      <div class="panel-heading">
+        <div><p class="kicker">Task editor</p><h2 id="formTitle">Add a task</h2></div>
+        <button id="clearForm" class="icon-button" type="button" aria-label="Clear form">×</button>
+      </div>
+
+      <form id="taskForm" novalidate>
+        <label for="titleInput">Title</label>
+        <input id="titleInput" maxlength="80" placeholder="Finalize project scope" required>
+
+        <div class="field-grid">
+          <div>
+            <label for="typeInput">Type</label>
+            <select id="typeInput"><option value="task">Task</option><option value="milestone">Milestone</option></select>
+          </div>
+          <div>
+            <label for="priorityInput">Priority</label>
+            <select id="priorityInput"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+          </div>
+          <div>
+            <label for="startInput">Start date</label>
+            <input id="startInput" type="date" required>
+          </div>
+          <div id="endField">
+            <label for="endInput">End date</label>
+            <input id="endInput" type="date" required>
+          </div>
+          <div>
+            <label for="statusInput">Status</label>
+            <select id="statusInput"><option value="planned">Planned</option><option value="in-progress">In progress</option><option value="blocked">Blocked</option><option value="completed">Completed</option></select>
+          </div>
+          <div id="progressField">
+            <label for="progressInput">Progress</label>
+            <div class="range-row"><input id="progressInput" type="range" min="0" max="100" step="5" value="0"><output id="progressOutput">0%</output></div>
+          </div>
+        </div>
+
+        <label for="descriptionInput">Description</label>
+        <textarea id="descriptionInput" rows="4" maxlength="300" placeholder="Optional notes, owner or deliverable details"></textarea>
+        <p id="formMessage" class="form-message" role="alert"></p>
+
+        <div class="form-actions">
+          <button id="saveButton" class="button primary" type="submit">Add task</button>
+          <button id="deleteButton" class="button danger" type="button" hidden>Delete</button>
+        </div>
+      </form>
+      <p class="local-note"><strong>Local-first:</strong> project data is stored only in this browser unless exported.</p>
+    </section>
+
+    <section class="workspace">
+      <section class="panel filters">
+        <div class="filter-grid">
+          <label class="search"><span>Search</span><input id="searchInput" type="search" placeholder="Search tasks"></label>
+          <label><span>Status</span><select id="statusFilter"><option value="all">All statuses</option><option value="planned">Planned</option><option value="in-progress">In progress</option><option value="blocked">Blocked</option><option value="completed">Completed</option></select></label>
+          <label><span>Priority</span><select id="priorityFilter"><option value="all">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></label>
+          <label><span>Type</span><select id="typeFilter"><option value="all">Tasks and milestones</option><option value="task">Tasks only</option><option value="milestone">Milestones only</option></select></label>
+          <button id="todayButton" class="button outline" type="button">Jump to today</button>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Project summary">
+        <article><span>Total items</span><strong id="totalCount">0</strong></article>
+        <article><span>In progress</span><strong id="inProgressCount">0</strong></article>
+        <article><span>Completed</span><strong id="completedCount">0</strong></article>
+        <article><span>Average progress</span><strong id="averageProgress">0%</strong></article>
+      </section>
+
+      <section class="panel timeline-panel">
+        <div class="panel-heading timeline-heading">
+          <div><p class="kicker">Project view</p><h2>Timeline</h2></div>
+          <div class="legend"><span><i class="planned"></i>Planned</span><span><i class="in-progress"></i>In progress</span><span><i class="blocked"></i>Blocked</span><span><i class="completed"></i>Completed</span></div>
+        </div>
+
+        <div id="emptyState" class="empty" hidden><strong>No matching items</strong><span>Add a task or clear your filters.</span></div>
+        <div id="timelineViewport" class="timeline-viewport">
+          <div id="timelineCanvas" class="timeline-canvas">
+            <div id="timelineHeader" class="timeline-header"></div>
+            <div id="timelineRows"></div>
+            <div id="todayLine" class="today-line" hidden><span>Today</span></div>
+          </div>
+        </div>
+        <p id="timelineHelp" class="help">Drag a task bar or milestone horizontally to move it by whole days. Click a row to edit.</p>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="panel-heading"><div><p class="kicker">Details</p><h2>Task list</h2></div><span id="visibleCount" class="count">0 items</span></div>
+        <div id="taskList" class="task-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer><div class="container footer-inner"><span>Timeline Planner · MIT licensed</span><span>No account · No backend · No tracking</span></div></footer>
+  <noscript><div class="noscript">JavaScript is required to use Timeline Planner.</div></noscript>
+</body>
+</html>
